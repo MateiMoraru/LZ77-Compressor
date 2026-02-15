@@ -1,21 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#define MIN_LZ 3
-#define MAX_LZ 32
-
-#define KB(v) ((v) * 1024)
-#define MB(v) ((v) * 1024 * 1024)
-
-#define SEARCH_WINDOW KB(4)
-#define LOOK_AHEAD_WINDOW KB(1)
-
-typedef struct
-{
-    int length;
-    int offset;
-} Pair;
+#include "compressor.h"
 
 void char_to_bits(char c, int bits[8])
 {
@@ -31,54 +14,6 @@ void char_to_binary_string(unsigned char c, char bits[9]) {
     }
     bits[8] = '\0';
 }
-
-// Pair find_longest_match(char* search_buffer, char* look_ahead_buffer)
-// {
-//     int found = 0;
-//     for (int i = 0; i < strlen(search_buffer); i++)
-//     {
-//         for (int j = 0; j < strlen(look_ahead_buffer); j++)
-//         {
-//             if (search_buffer[i] == look_ahead_buffer[j])
-//             {
-//                 found++;
-//             }
-//             else
-//             {
-//                 return (Pair) {found, i};
-//             }
-//         }
-//     }
-// }
-
-// Pair find_longest_match(char* search_buffer, char* look_ahead_buffer)
-// {
-//     int best_len = 0;
-//     int best_pos = 0;
-//     int search_len = strlen(search_buffer);
-//     int look_ahead_len = strlen(look_ahead_buffer);
-
-//     int max_len = look_ahead_len;
-
-//     for (int i = 0; i < search_len; i++)
-//     {
-//         int current_len = 0;
-
-//         while (current_len < max_len && i + current_len < search_len && search_buffer[i + current_len] == look_ahead_buffer[current_len])
-//         {
-//             current_len++;
-//         }
-
-//         if (current_len > best_len)
-//         {
-//             best_len = current_len;
-//             best_pos = i;
-//         }
-//     }
-
-//     return (Pair) {best_len, best_pos};
-// }
-
 
 Pair find_longest_match(char* buffer, int pos, int window_size, int max_look_ahead)
 {
@@ -114,13 +49,8 @@ Pair find_longest_match(char* buffer, int pos, int window_size, int max_look_ahe
 void compress_string(char* buffer, char* compressed_buffer)
 {
     int buffer_len = strlen(buffer);
-    // char* search_buffer = malloc(KB(4) + 1);
-    // char* look_ahead_buffer = malloc(KB(1) + 1);
 
     compressed_buffer[0] = '\0';
-    // look_ahead_buffer[0] = '\0';
-    // search_buffer[0] = '\0';
-
     int pos = 0;
 
     Pair match = {-1, -1};
@@ -130,17 +60,12 @@ void compress_string(char* buffer, char* compressed_buffer)
 
     while (pos < buffer_len)
     {
-        // int bits[8];
-        // char_to_bits(buffer[pos], bits);
 
         int look_ahead_len = buffer_len - pos;
         if (look_ahead_len > LOOK_AHEAD_WINDOW)
         {
             look_ahead_len = LOOK_AHEAD_WINDOW;
         }
-
-        // strncpy(look_ahead_buffer, buffer + pos, look_ahead_len);
-        // look_ahead_buffer[look_ahead_len] = '\0';
     
         match = find_longest_match(buffer, pos, SEARCH_WINDOW, LOOK_AHEAD_WINDOW);
 
@@ -148,8 +73,6 @@ void compress_string(char* buffer, char* compressed_buffer)
         {
             sprintf(temp, "1 %d %d ", match.offset, match.length);
             strcat(compressed_buffer, temp);
-
-            // strncat(search_buffer, buffer + pos, match.length);
 
             pos += match.length;
         }
@@ -160,53 +83,10 @@ void compress_string(char* buffer, char* compressed_buffer)
             strcat(compressed_buffer, " ");
 
             char single_char[2] = {buffer[pos], '\0'};
-            // strcat(search_buffer, single_char);
             
             pos++;
         }
-
-        // int search_len = strlen(search_buffer);
-        // if (search_len > SEARCH_WINDOW)
-        // {
-        //     memmove(search_buffer, search_buffer + search_len - SEARCH_WINDOW, SEARCH_WINDOW);
-        //     search_buffer[SEARCH_WINDOW] = '\0';
-        // }
-
-        // char_to_binary_string(buffer[pos], bits);
-
-        // if (pos < 2)
-        // {
-        //     strcat(compressed_buffer, bits);
-        //     continue;
-        // }
-
-        // match = find_longest_match(search_buffer, look_ahead_buffer);
-
-        // if (match.x == 0)
-        // {
-        //     strcat(compressed_buffer, bits);
-        //     continue;
-        // }
-
-        // if (match.x < 2)
-        // {
-        //     for (int i = pos; i < match.x; i++)
-        //     {
-        //         char_to_binary_string(buffer[i], bits);   
-        //         strcat(compressed_buffer, strcat(bits, ' '));
-        //     }
-
-        //     pos += match.x;
-        //     continue;
-        // }
-
-        // strcat(compressed_buffer, '1 ');
-        // strcat(compressed_buffer, strcat(itoa(pos - match.y), ' '));
-        // strcat(compressed_buffer, strcat(itoa(match.x), ' '));
     }
-
-    // free(search_buffer);
-    // free(look_ahead_buffer);
 }
 
 void decompress_string(char* compressed, char* decompressed)
@@ -255,7 +135,7 @@ void decompress_string(char* compressed, char* decompressed)
     }
 }
 
-int main()
+int run()
 {
     char input1[] = "ABABABABABABABAB";
     char input2[] = "HELLO HELLO HELLO HELLO";
